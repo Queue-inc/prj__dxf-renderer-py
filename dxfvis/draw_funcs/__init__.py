@@ -2,7 +2,7 @@ from .arc import draw_arc
 from .circle import draw_circle
 from .line import draw_line
 from .polyline import draw_polyline
-from .lwpolyline import draw_lwpolyline
+from .polyline import draw_lwpolyline
 from .text import draw_text
 from .point import draw_point
 from .insert import draw_insert

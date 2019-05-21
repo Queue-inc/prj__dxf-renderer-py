@@ -73,9 +73,9 @@ def render_dxf(
                 op, bb = entity_rep
                 ops.append(op)
                 drawing_xmin = min(drawing_xmin, bb[0][0])
-                drawing_xmax = min(drawing_xmax, bb[1][0])
+                drawing_xmax = max(drawing_xmax, bb[1][0])
                 drawing_ymin = min(drawing_ymin, bb[0][1])
-                drawing_ymax = min(drawing_ymax, bb[1][1])
+                drawing_ymax = max(drawing_ymax, bb[1][1])
 
         else:
             entity_rep = draw_entity(entity, drawing)
@@ -85,12 +85,12 @@ def render_dxf(
             op, bb = entity_rep
             ops.append(op)
             drawing_xmin = min(drawing_xmin, bb[0][0])
-            drawing_xmax = min(drawing_xmax, bb[1][0])
+            drawing_xmax = max(drawing_xmax, bb[1][0])
             drawing_ymin = min(drawing_ymin, bb[0][1])
-            drawing_ymax = min(drawing_ymax, bb[1][1])
+            drawing_ymax = max(drawing_ymax, bb[1][1])
 
     # render dxf as an image
-    dxf_space = ((drawing_xmin, drawing_ymin), (drawing_ymin, drawing_ymax))
+    dxf_space = ((drawing_xmin, drawing_ymin), (drawing_xmax, drawing_ymax))
     aspect_ratio = (drawing_ymax - drawing_ymin) / (drawing_xmax - drawing_xmin)
     scale = image_size / max((drawing_ymax - drawing_ymin), (drawing_xmax - drawing_xmin))
     if aspect_ratio > 1:

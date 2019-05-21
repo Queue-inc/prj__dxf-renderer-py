@@ -25,8 +25,8 @@ def draw_circle(
     """円を描画します"""
 
     linetype = util.get_linetype(entity, drawing)
-    pt_center = entity.dxf.center
-    radius = entity.dxf.radius
+    pt_center = entity.dxf.center[:2]
+    radius = int(entity.dxf.radius)
     if radius == 0:
         return None
 
@@ -39,7 +39,7 @@ def draw_circle(
     elif 'pattern' in linetype.dxfattribs().keys():
         op = OpenCVOp(pattern_arc,
                       args=(
-                          (pt_center, S.SEQUENCE_MAPPING),
+                          (pt_center, S.POINT_MAPPING),
                           ((radius, radius), S.SEQUENCE_MAPPING),
                           (entity.dxf.pattern, S.SEQUENCE_MAPPING),
                           (0, S.NO_MAPPING),
@@ -51,7 +51,7 @@ def draw_circle(
         pattern_length = 1 if 'length' not in entity.dxfattribs() else entity.dxf.length
         op = OpenCVOp(textured_arc_approx,
                       args=(
-                          (pt_center, S.SEQUENCE_MAPPING),
+                          (pt_center, S.POINT_MAPPING),
                           ((radius, radius), S.SEQUENCE_MAPPING),
                           (entity.dxf.description, S.NO_MAPPING),
                           (pattern_length, S.CONSTANT_MAPPING),

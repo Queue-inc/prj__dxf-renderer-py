@@ -17,7 +17,7 @@ from dxfvis.types import VariableStatus as S
 from dxfvis.types import NPPoint
 
 
-def draw_arc(
+def draw_text(
         entity: ezdxf.legacy.text.Text,
         drawing: ezdxf.drawing.Drawing) -> Optional[Tuple[OpenCVOp, BoundingBox]]:
     """テキストを描画します"""

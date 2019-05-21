@@ -18,22 +18,32 @@ from dxfvis.types import NPPoint
 
 
 def draw_arc(
-        entity: ezdxf.legacy.graphic.Arc,
+        entity: ezdxf.legacy.graphics.Arc,
         drawing: ezdxf.drawing.Drawing) -> Optional[Tuple[OpenCVOp, BoundingBox]]:
     """弧を描画します"""
 
-    pt_center = entity.dxf.center
-    radius = entity.dxf.radius
+    pt_center = entity.dxf.center[:2]
+    radius = int(entity.dxf.radius)
     if radius == 0:
         return None
 
     start_angle = int(entity.dxf.start_angle)
     end_angle = int(entity.dxf.end_angle)
+    if start_angle == end_angle:
+        return None
+    if start_angle < end_angle:
+        start_angle *= -1
+        end_angle *= -1
+    else:
+        start_angle = start_angle - 360
+        if end_angle == 0:
+            end_angle = 360
+
     linetype = util.get_linetype(entity, drawing)
     if linetype is None or linetype.dxf.length == 0:
         op = OpenCVOp(cv2.ellipse,
                       args=(
-                          (pt_center, S.SEQUENCE_MAPPING),
+                          (pt_center, S.POINT_MAPPING),
                           ((radius, radius), S.SEQUENCE_MAPPING),
                           (0, S.NO_MAPPING),
                           (start_angle, S.NO_MAPPING),
@@ -44,7 +54,7 @@ def draw_arc(
     elif 'pattern' in linetype.dxfattribs().keys():
         op = OpenCVOp(pattern_arc,
                       args=(
-                          (pt_center, S.SEQUENCE_MAPPING),
+                          (pt_center, S.POINT_MAPPING),
                           ((radius, radius), S.SEQUENCE_MAPPING),
                           (entity.dxf.pattern, S.SEQUENCE_MAPPING),
                           (start_angle, S.NO_MAPPING),
@@ -56,7 +66,7 @@ def draw_arc(
         pattern_length = 1 if 'length' not in entity.dxfattribs() else entity.dxf.length
         op = OpenCVOp(textured_arc_approx,
                       args=(
-                          (pt_center, S.SEQUENCE_MAPPING),
+                          (pt_center, S.POINT_MAPPING),
                           ((radius, radius), S.SEQUENCE_MAPPING),
                           (entity.dxf.description, S.NO_MAPPING),
                           (pattern_length, S.CONSTANT_MAPPING),

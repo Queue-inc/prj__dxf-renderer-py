@@ -20,7 +20,7 @@ from .arc import textured_arc_approx
 
 
 def draw_ellipse(
-        entity: ezdxf.legacy.graphics.Ellipse,
+        entity: ezdxf.modern.ellipse.Ellipse,
         drawing: ezdxf.drawing.Drawing) -> Optional[Tuple[OpenCVOp, BoundingBox]]:
     """楕円を描画します"""
 

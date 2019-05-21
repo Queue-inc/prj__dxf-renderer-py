@@ -24,16 +24,21 @@ Scalar = TypeVar('Scalar', int, float)
 class VariableStatus(Enum):
     NO_MAPPING = 1
     CONSTANT_MAPPING = 2
-    POINT_MAPPING = 2
+    POINT_MAPPING = 3
     SEQUENCE_MAPPING = 4
 
 
-class OpenCVOp(NamedTuple):
+class OpenCVOp(object):
     """representing opencv operations about drawing"""
 
     func: Callable[..., Any]
     args: Sequence[Tuple[Any, VariableStatus]]
     kwargs: Dict[str, Tuple[Any, VariableStatus]]
+
+    def __init__(self, func, args, kwargs):
+        self.func = func
+        self.args = args
+        self.kwargs = kwargs
 
     def __call__(self, img: np.ndarray, op_space: Tuple[DXFPoint, DXFPoint]) -> None:
         """ call opencv function with the scale into consideration """
@@ -42,8 +47,14 @@ class OpenCVOp(NamedTuple):
         for val, status in self.args:
             if status == VariableStatus.CONSTANT_MAPPING:
                 args.append(self._map_constant(val, op_space[0], op_space[1], img.shape))
-            elif status == VariableStatus.CONSTANT_MAPPING:
+            elif status == VariableStatus.POINT_MAPPING:
                 args.append(self._map_point(val, op_space[0], op_space[1], img.shape))
+            elif status == VariableStatus.SEQUENCE_MAPPING:
+                if hasattr(val[0], '__len__'):
+                    val = tuple([self._map_point(v, op_space[0], op_space[1], img.shape) for v in val])
+                else:
+                    val = tuple([self._map_constant(v, op_space[0], op_space[1], img.shape) for v in val])
+                args.append(val)
             else:
                 args.append(val)
 
@@ -51,11 +62,15 @@ class OpenCVOp(NamedTuple):
         for key, (val, status) in self.kwargs.items():
             if status == VariableStatus.CONSTANT_MAPPING:
                 kwargs[key] = self._map_constant(val, op_space[0], op_space[1], img.shape)
-            elif status == VariableStatus.CONSTANT_MAPPING:
+            elif status == VariableStatus.POINT_MAPPING:
                 kwargs[key] = self._map_point(val, op_space[0], op_space[1], img.shape)
             elif status == VariableStatus.SEQUENCE_MAPPING:
                 val = kwargs[key]
-                val = [self._map_point(v, op_space[0], op_space[1], img.shape) for v in val]
+                if hasattr(val[0], '__len__'):
+                    val = tuple([self._map_point(v, op_space[0], op_space[1], img.shape) for v in val])
+                else:
+                    val = tuple([self._map_constant(v, op_space[0], op_space[1], img.shape) for v in val])
+
                 kwargs[key] = val
             else:
                 kwargs[key] = val

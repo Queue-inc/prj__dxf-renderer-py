@@ -21,15 +21,17 @@ def draw_line(
     """実線を描画します"""
 
     linetype = util.get_linetype(entity, drawing)
+    start = entity.dxf.start[:2]
+    end = entity.dxf.end[:2]
     if linetype is None or linetype.dxf.length == 0:
         op = OpenCVOp(cv2.line,
-                      args=((entity.dxf.start, S.POINT_MAPPING), (entity.dxf.end, S.POINT_MAPPING)),
+                      args=((start, S.POINT_MAPPING), (end, S.POINT_MAPPING)),
                       kwargs={
                           'color': (util.get_color(entity, drawing), S.NO_MAPPING),
                           'thickness': (util.get_linewidth(entity, drawing), S.CONSTANT_MAPPING)})
     elif 'pattern' in linetype.dxfattribs().keys():
         op = OpenCVOp(pattern_line,
-                      args=((entity.dxf.start, S.POINT_MAPPING), (entity.dxf.end, S.POINT_MAPPING)),
+                      args=((start, S.POINT_MAPPING), (end, S.POINT_MAPPING)),
                       kwargs={
                           'pattern': (linetype.dxf.pattern, S.SEQUENCE_MAPPING),
                           'color': (util.get_color(entity, drawing), S.NO_MAPPING),
@@ -38,17 +40,17 @@ def draw_line(
     else:
         pattern_length = 1 if 'length' not in entity.dxfattribs() else entity.dxf.length
         op = OpenCVOp(textured_line,
-                      args=((entity.dxf.start, S.POINT_MAPPING), (entity.dxf.end, S.POINT_MAPPING)),
+                      args=((start, S.POINT_MAPPING), (end, S.POINT_MAPPING)),
                       kwargs={
                           'pattern_string': (entity.dxf.description, S.NO_MAPPING),
                           'pattern_length': (entity.dxf.length, S.CONSTANT_MAPPING),
                           'color': (util.get_color(entity, drawing), S.NO_MAPPING),
                           'thickness': (util.get_linewidth(entity, drawing), S.CONSTANT_MAPPING)})
 
-    xmin = min(entity.dxf.start[0], entity.dxf.end[0])
-    xmax = max(entity.dxf.start[0], entity.dxf.end[0])
-    ymin = min(entity.dxf.start[1], entity.dxf.end[1])
-    ymax = min(entity.dxf.start[1], entity.dxf.end[1])
+    xmin = min(start[0], end[0])
+    xmax = max(start[0], end[0])
+    ymin = min(start[1], end[1])
+    ymax = max(start[1], end[1])
     bbox = ((xmin, ymin), (xmax, ymax))
 
     return op, bbox

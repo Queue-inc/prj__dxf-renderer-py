@@ -5,19 +5,19 @@ import numpy as np
 
 
 def get_color(entity, drawing):
-    pass
+    return (255, 255, 255)
 
 
 def get_linewidth(entity, drawing):
-    pass
+    return 3
 
 
 def get_linetype(entity, drawing):
-    pass
+    return None
 
 
 def get_dot_radius(entity, drawing):
-    pass
+    return 4
 
 
 def degree2rad(deg):
