@@ -38,7 +38,17 @@ def get_linetype(entity, drawing):
         layer_params = {}
 
     if 'linetype' in ent_params.keys():
-        linetype = drawing.linetypes.get(ent_params['linetype'])
+        linetype_repr = ent_params['linetype']
+        if linetype_repr == 'BYBLOCK':
+            linetype = None
+        elif linetype_repr == 'BYLAYER':
+            linetype_repr_ = layer_params.get('linetype')
+            if linetype_repr_ is None:
+                linetype = None
+            else:
+                linetype = drawing.linetypes.get(linetype_repr_)
+        else:
+            linetype = drawing.linetypes.get(linetype_repr)
     elif 'linetype' in layer_params.keys():
         linetype = drawing.linetypes.get(layer_params['linetype'])
     else:

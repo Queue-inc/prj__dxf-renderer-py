@@ -58,8 +58,8 @@ def draw_polyline(
                           'thickness': (thickness, S.CONSTANT_MAPPING),
                           'is_closed': (entity.is_closed, S.NO_MAPPING),
                           'draw_func': (textured_line, S.NO_MAPPING),
-                          'pattern_string': (entity.dxf.description, S.NO_MAPPING),
-                          'pattern_length': (util.scale_linetype_length(entity.dxf.length), S.CONSTANT_MAPPING)})
+                          'pattern_string': (linetype.dxf.description, S.NO_MAPPING),
+                          'pattern_length': (util.scale_linetype_length(linetype.dxf.length), S.CONSTANT_MAPPING)})
 
     x_list = [v[0] for v in vertices]
     y_list = [v[1] for v in vertices]
