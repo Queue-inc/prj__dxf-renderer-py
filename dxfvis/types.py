@@ -75,6 +75,21 @@ class OpenCVOp(object):
             else:
                 kwargs[key] = val
 
+        # linewidthおよびdot radius は画像の大きさに応じてここで入れ直す
+        if 'thickness' in kwargs.keys():
+            ideal_thickness = int(max(img.shape) / 700)
+            if ideal_thickness == 0:
+                ideal_thickness = 1
+
+            kwargs['thickness'] = ideal_thickness
+
+        if 'dot_radius' in kwargs.keys():
+            ideal_r = int(max(img.shape) / 900)
+            if ideal_r == 0:
+                ideal_r = 1
+
+            kwargs['dot_radius'] = ideal_r
+
         self.func(img, *args, **kwargs)
 
     @staticmethod

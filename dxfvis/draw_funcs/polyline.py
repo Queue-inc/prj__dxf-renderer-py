@@ -40,6 +40,7 @@ def draw_polyline(
                           'thickness': (thickness, S.CONSTANT_MAPPING),
                           'is_closed': (entity.is_closed, S.NO_MAPPING)})
     elif 'pattern' in linetype.dxfattribs().keys():
+        pattern = util.scale_linetype_length(linetype.dxf.pattern)
         op = OpenCVOp(_draw_pl_op,
                       args=((vertices, S.SEQUENCE_MAPPING),),
                       kwargs={
@@ -47,7 +48,7 @@ def draw_polyline(
                           'thickness': (thickness, S.CONSTANT_MAPPING),
                           'is_closed': (entity.is_closed, S.NO_MAPPING),
                           'draw_func': (pattern_line, S.NO_MAPPING),
-                          'pattern': (linetype.dxf.pattern, S.SEQUENCE_MAPPING),
+                          'pattern': (pattern, S.SEQUENCE_MAPPING),
                           'dot_radius': (util.get_dot_radius(entity, drawing), S.CONSTANT_MAPPING)})
     else:
         op = OpenCVOp(_draw_pl_op,
@@ -58,7 +59,7 @@ def draw_polyline(
                           'is_closed': (entity.is_closed, S.NO_MAPPING),
                           'draw_func': (textured_line, S.NO_MAPPING),
                           'pattern_string': (entity.dxf.description, S.NO_MAPPING),
-                          'pattern_length': (entity.dxf.length, S.CONSTANT_MAPPING)})
+                          'pattern_length': (util.scale_linetype_length(entity.dxf.length), S.CONSTANT_MAPPING)})
 
     x_list = [v[0] for v in vertices]
     y_list = [v[1] for v in vertices]
@@ -82,16 +83,17 @@ def draw_lwpolyline(
                       kwargs={
                           'color': (color, S.NO_MAPPING),
                           'thickness': (thickness, S.CONSTANT_MAPPING),
-                          'is_closed': (entity.is_closed, S.NO_MAPPING)})
+                          'is_closed': (entity.closed, S.NO_MAPPING)})
     elif 'pattern' in linetype.dxfattribs().keys():
+        pattern = util.scale_linetype_length(linetype.dxf.pattern)
         op = OpenCVOp(_draw_pl_op,
                       args=((vertices, S.SEQUENCE_MAPPING),),
                       kwargs={
                           'color': (color, S.NO_MAPPING),
                           'thickness': (thickness, S.CONSTANT_MAPPING),
-                          'is_closed': (entity.is_closed, S.NO_MAPPING),
+                          'is_closed': (entity.closed, S.NO_MAPPING),
                           'draw_func': (pattern_line, S.NO_MAPPING),
-                          'pattern': (linetype.dxf.pattern, S.SEQUENCE_MAPPING),
+                          'pattern': (pattern, S.SEQUENCE_MAPPING),
                           'dot_radius': (util.get_dot_radius(entity, drawing), S.CONSTANT_MAPPING)})
     else:
         op = OpenCVOp(_draw_pl_op,
@@ -99,10 +101,10 @@ def draw_lwpolyline(
                       kwargs={
                           'color': (color, S.NO_MAPPING),
                           'thickness': (thickness, S.CONSTANT_MAPPING),
-                          'is_closed': (entity.is_closed, S.NO_MAPPING),
+                          'is_closed': (entity.closed, S.NO_MAPPING),
                           'draw_func': (textured_line, S.NO_MAPPING),
-                          'pattern_string': (entity.dxf.description, S.NO_MAPPING),
-                          'pattern_length': (entity.dxf.length, S.CONSTANT_MAPPING)})
+                          'pattern_string': (linetype.dxf.description, S.NO_MAPPING),
+                          'pattern_length': (util.scale_linetype_length(linetype.dxf.length), S.CONSTANT_MAPPING)})
 
     x_list = [v[0] for v in vertices]
     y_list = [v[1] for v in vertices]
@@ -116,7 +118,7 @@ def _draw_pl_op(img, vertices, color, thickness, is_closed=False, draw_func=cv2.
     pt_prev = None
     for pt in vertices:
         if pt_prev is None:
-            pt_start = None
+            pt_start = pt
             pt_prev = pt
             continue
 

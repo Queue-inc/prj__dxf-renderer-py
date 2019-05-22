@@ -30,22 +30,23 @@ def draw_line(
                           'color': (util.get_color(entity, drawing), S.NO_MAPPING),
                           'thickness': (util.get_linewidth(entity, drawing), S.CONSTANT_MAPPING)})
     elif 'pattern' in linetype.dxfattribs().keys():
+        pattern = util.scale_linetype_length(linetype.dxf.pattern)
         op = OpenCVOp(pattern_line,
                       args=((start, S.POINT_MAPPING), (end, S.POINT_MAPPING)),
                       kwargs={
-                          'pattern': (linetype.dxf.pattern, S.SEQUENCE_MAPPING),
+                          'pattern': (pattern, S.SEQUENCE_MAPPING),
                           'color': (util.get_color(entity, drawing), S.NO_MAPPING),
                           'thickness': (util.get_linewidth(entity, drawing), S.CONSTANT_MAPPING),
                           'dot_radius': (util.get_dot_radius(entity, drawing), S.CONSTANT_MAPPING)})
     else:
-        pattern_length = 1 if 'length' not in entity.dxfattribs() else entity.dxf.length
+        pattern_length = 100 if 'length' not in linetype.dxfattribs() else util.scale_linetype_length(linetype.dxf.length)
         op = OpenCVOp(textured_line,
                       args=((start, S.POINT_MAPPING), (end, S.POINT_MAPPING)),
                       kwargs={
-                          'pattern_string': (entity.dxf.description, S.NO_MAPPING),
-                          'pattern_length': (entity.dxf.length, S.CONSTANT_MAPPING),
-                          'color': (util.get_color(entity, drawing), S.NO_MAPPING),
-                          'thickness': (util.get_linewidth(entity, drawing), S.CONSTANT_MAPPING)})
+                          'pattern_string': (linetype.dxf.description, S.NO_MAPPING),
+                          'pattern_length': (pattern_length, S.CONSTANT_MAPPING),
+                          'thickness': (util.get_linewidth(entity, drawing), S.CONSTANT_MAPPING),
+                          'color': (util.get_color(entity, drawing), S.NO_MAPPING)})
 
     xmin = min(start[0], end[0])
     xmax = max(start[0], end[0])
@@ -78,8 +79,9 @@ def pattern_line(
 
     start_pt = pt1
     end_pt = pt1
-    while drawn_length <= total_line_length:
-        for p in pattern:
+    is_exceeded = False
+    while not is_exceeded:
+        for p in pattern[1:]:
             if p == 0:
                 cv2.circle(img, end_pt, dot_radius, color, thickness=-1)
                 continue
@@ -87,12 +89,17 @@ def pattern_line(
             p_abs = abs(p)
             drawn_length += p_abs
             if drawn_length > total_line_length:
-                break
+                p_abs = total_line_length - drawn_length + p_abs
+                p = np.sign(p) * p_abs
+                is_exceeded = True
 
             start_pt = end_pt
             end_pt = (end_pt[0] + int(p_abs * x_coef), end_pt[1] + int(p_abs * y_coef))
             if p > 0:
                 cv2.line(img, start_pt, end_pt, color, thickness)
+
+            if is_exceeded:
+                break
 
 
 def textured_line(
@@ -102,21 +109,9 @@ def textured_line(
         pattern_string: str,
         pattern_length: float,
         color=(255, 255, 255),
+        thickness=10,
         font=cv2.FONT_HERSHEY_SIMPLEX) -> None:
     """2点間の線状のパターンを描画します"""
 
-    text_size, baseline = cv2.getTextSize(pattern_string, font, fontScale=1., thickness=1)
-    font_scale = pattern_length / text_size[0]
-    total_line_length = np.sqrt((pt1[0] - pt2[0]) ** 2 + (pt1[1] - pt2[1]) ** 2)
-    # pt1とpt2がなす角を求める
-    angle_rad = util.get_angle_between(pt1, pt2)
-    if angle_rad is None:
-        return
-
-    angle = util.rad2degree(angle_rad)
-    drawn_length: float = 0
-    org = pt1
-    while drawn_length <= total_line_length:
-        util.putTextRotated(img, angle, pattern_string, org, font, font_scale, color)
-        org = (org[0] + int(pattern_length * np.cos(angle_rad)), org[1] + int(pattern_length * np.sin(angle_rad)))
-        drawn_length += pattern_length
+    pattern = util.approx_pattern_string(pattern_string, pattern_length)
+    pattern_line(img, pt1, pt2, pattern, color, thickness)

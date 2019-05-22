@@ -23,5 +23,4 @@ def draw_insert(
         entity: ezdxf.legacy.insert.Insert,
         drawing: ezdxf.drawing.Drawing) -> Optional[Tuple[OpenCVOp, BoundingBox]]:
     """Blockを挿入します"""
-
-    return None
+    pass

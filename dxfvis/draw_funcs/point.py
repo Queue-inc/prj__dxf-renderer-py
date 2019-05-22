@@ -21,4 +21,17 @@ def draw_point(
         entity: ezdxf.legacy.graphics.Point,
         drawing: ezdxf.drawing.Drawing) -> Optional[Tuple[OpenCVOp, BoundingBox]]:
     """点を描画します"""
-    pass
+
+    pt = entity.dxf.location[:2]
+    color = util.get_color(entity, drawing)
+    radius = util.get_dot_radius(entity, drawing)
+
+    op = OpenCVOp(cv2.circle,
+                  args=((pt, S.POINT_MAPPING), (radius, S.CONSTANT_MAPPING)),
+                  kwargs={
+                      'color': (color, S.NO_MAPPING),
+                      'thickness': -1})  # fill in the circle
+
+    bbox = (pt, pt)
+
+    return op, bbox

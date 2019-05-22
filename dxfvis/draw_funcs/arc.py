@@ -29,16 +29,9 @@ def draw_arc(
 
     start_angle = int(entity.dxf.start_angle)
     end_angle = int(entity.dxf.end_angle)
-    if start_angle == end_angle:
-        return None
-    if start_angle < end_angle:
-        start_angle *= -1
-        end_angle *= -1
-    else:
-        start_angle = start_angle - 360
-        if end_angle == 0:
-            end_angle = 360
-
+    print(start_angle, end_angle, radius)
+    start_angle, end_angle = flip_angle(start_angle, end_angle)
+    print(start_angle, end_angle)
     linetype = util.get_linetype(entity, drawing)
     if linetype is None or linetype.dxf.length == 0:
         op = OpenCVOp(cv2.ellipse,
@@ -52,23 +45,24 @@ def draw_arc(
                           'color': (util.get_color(entity, drawing), S.NO_MAPPING),
                           'thickness': (util.get_linewidth(entity, drawing), S.CONSTANT_MAPPING)})
     elif 'pattern' in linetype.dxfattribs().keys():
+        pattern = util.scale_linetype_length(linetype.dxf.pattern)
         op = OpenCVOp(pattern_arc,
                       args=(
                           (pt_center, S.POINT_MAPPING),
-                          ((radius, radius), S.SEQUENCE_MAPPING),
-                          (entity.dxf.pattern, S.SEQUENCE_MAPPING),
+                          (radius, S.CONSTANT_MAPPING),
+                          (pattern, S.SEQUENCE_MAPPING),
                           (start_angle, S.NO_MAPPING),
                           (end_angle, S.NO_MAPPING)),
                       kwargs={
                           'color': (util.get_color(entity, drawing), S.NO_MAPPING),
                           'thickness': (util.get_linewidth(entity, drawing), S.CONSTANT_MAPPING)})
     else:
-        pattern_length = 1 if 'length' not in entity.dxfattribs() else entity.dxf.length
+        pattern_length = 1 if 'length' not in linetype.dxfattribs() else util.scale_linetype_length(linetype.dxf.length)
         op = OpenCVOp(textured_arc_approx,
                       args=(
                           (pt_center, S.POINT_MAPPING),
-                          ((radius, radius), S.SEQUENCE_MAPPING),
-                          (entity.dxf.description, S.NO_MAPPING),
+                          (radius, S.CONSTANT_MAPPING),
+                          (linetype.dxf.description, S.NO_MAPPING),
                           (pattern_length, S.CONSTANT_MAPPING),
                           (start_angle, S.NO_MAPPING),
                           (end_angle, S.NO_MAPPING)),
@@ -93,13 +87,18 @@ def pattern_arc(
         dot_radius=4) -> None:
     """弧のパターンをDXF形式のline/dot/blankの組み合わせによって描画します"""
 
+    if radius == 0:
+        return
+
     total_line_length = util.degree2rad(end_angle - start_angle) * radius
-    total_angle_length = end_angle - start_angle
+    total_angle_length = abs(end_angle - start_angle)
+    direction = np.sign(end_angle - start_angle)
     drawn_length: float = 0
     angle_from = start_angle
     angle_to = start_angle
-    while drawn_length <= total_angle_length:
-        for p in pattern:
+    is_exceeded = False
+    while not is_exceeded:
+        for p in pattern[1:]:
             if p == 0:
                 target_pt = (center[0] + int(radius * np.cos(util.degree2rad(angle_to))), center[1] + int(radius * np.sin(util.degree2rad(angle_to))))
                 cv2.circle(img, target_pt, dot_radius, color, thickness=-1)
@@ -109,12 +108,16 @@ def pattern_arc(
             angle_abs = util.rad2degree(p_abs / radius)
             drawn_length += angle_abs
             if drawn_length > total_angle_length:
-                break
+                angle_abs = total_angle_length - drawn_length + angle_abs
+                is_exceeded = True
 
             angle_from = angle_to
-            angle_to += angle_abs
+            angle_to += direction * angle_abs
             if p > 0:
                 cv2.ellipse(img, center, (radius, radius), 0, angle_from, angle_to, color, thickness)
+
+            if is_exceeded:
+                break
 
 
 def textured_arc_approx(
@@ -131,3 +134,28 @@ def textured_arc_approx(
     """弧のパターンをDXF形式のline/dot/blankの組み合わせによって描画します"""
     pattern = util.approx_pattern_string(pattern_string, pattern_length)
     pattern_arc(img, center, radius, pattern, start_angle, end_angle, color, thickness, dot_radius)
+
+
+def flip_angle(start_angle, end_angle):
+    # assert start_angle >= 0 and end_angle >= 0
+    if start_angle < 0:
+        start_angle = 360 + start_angle
+    if end_angle < 0:
+        end_angle = 360 + end_angle
+
+    if start_angle < end_angle:
+        if start_angle != 0:
+            start_angle = 360 - start_angle
+            end_angle = 360 - end_angle
+        else:
+            end_angle *= -1
+
+        return start_angle, end_angle
+    else:
+        # start_angle = start_angle - 360
+        # if end_angle == 0:
+        #     end_angle = 360
+        start_angle = 360 - start_angle
+        end_angle *= -1
+
+        return start_angle, end_angle

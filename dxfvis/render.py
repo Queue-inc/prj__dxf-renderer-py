@@ -77,6 +77,24 @@ def render_dxf(
                 drawing_ymin = min(drawing_ymin, bb[0][1])
                 drawing_ymax = max(drawing_ymax, bb[1][1])
 
+        elif entity.dxftype() == 'INSERT':
+            if 'name' not in entity.dxfattribs():
+                warnings.warn('No block for INSERT ENTITY')
+                continue
+
+            block = drawing.blocks.get(entity.dxf.name)
+            for entity_ in block:
+                entity_rep = draw_entity(entity_, drawing)
+                if entity_rep is None:
+                    continue
+
+                op, bb = entity_rep
+                ops.append(op)
+                drawing_xmin = min(drawing_xmin, bb[0][0])
+                drawing_xmax = max(drawing_xmax, bb[1][0])
+                drawing_ymin = min(drawing_ymin, bb[0][1])
+                drawing_ymax = max(drawing_ymax, bb[1][1])
+
         else:
             entity_rep = draw_entity(entity, drawing)
             if entity_rep is None:
@@ -94,9 +112,9 @@ def render_dxf(
     aspect_ratio = (drawing_ymax - drawing_ymin) / (drawing_xmax - drawing_xmin)
     scale = image_size / max((drawing_ymax - drawing_ymin), (drawing_xmax - drawing_xmin))
     if aspect_ratio > 1:
-        image_shape = (image_size, int(image_size / aspect_ratio))
+        image_shape = (image_size, int(image_size / aspect_ratio), 3)
     else:
-        image_shape = (int(image_size * aspect_ratio), image_size)
+        image_shape = (int(image_size * aspect_ratio), image_size, 3)
 
     canvas = np.zeros(image_shape)
     # actual drawing
@@ -151,8 +169,6 @@ def draw_entity(
         return draw_text(obj, drawing)
     elif dxftype == 'POINT':
         return draw_point(obj, drawing)
-    elif dxftype == 'INSERT':
-        return draw_insert(obj, drawing)
     elif dxftype == 'MTEXT':
         return draw_mtext(obj, drawing)
     elif dxftype == 'ELLIPSE':

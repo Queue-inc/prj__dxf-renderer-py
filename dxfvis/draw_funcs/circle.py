@@ -40,7 +40,7 @@ def draw_circle(
         op = OpenCVOp(pattern_arc,
                       args=(
                           (pt_center, S.POINT_MAPPING),
-                          ((radius, radius), S.SEQUENCE_MAPPING),
+                          (radius, S.CONSTANT_MAPPING),
                           (entity.dxf.pattern, S.SEQUENCE_MAPPING),
                           (0, S.NO_MAPPING),
                           (360, S.NO_MAPPING)),
@@ -48,12 +48,12 @@ def draw_circle(
                           'color': (util.get_color(entity, drawing), S.NO_MAPPING),
                           'thickness': (util.get_linewidth(entity, drawing), S.CONSTANT_MAPPING)})
     else:
-        pattern_length = 1 if 'length' not in entity.dxfattribs() else entity.dxf.length
+        pattern_length = 1 if 'length' not in linetype.dxfattribs() else linetype.dxf.length
         op = OpenCVOp(textured_arc_approx,
                       args=(
                           (pt_center, S.POINT_MAPPING),
-                          ((radius, radius), S.SEQUENCE_MAPPING),
-                          (entity.dxf.description, S.NO_MAPPING),
+                          (radius, S.CONSTANT_MAPPING),
+                          (linetype.dxf.description, S.NO_MAPPING),
                           (pattern_length, S.CONSTANT_MAPPING),
                           (0, S.NO_MAPPING),
                           (360, S.NO_MAPPING)),
