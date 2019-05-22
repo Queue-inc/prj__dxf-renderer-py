@@ -29,9 +29,7 @@ def draw_arc(
 
     start_angle = int(entity.dxf.start_angle)
     end_angle = int(entity.dxf.end_angle)
-    print(start_angle, end_angle, radius)
     start_angle, end_angle = flip_angle(start_angle, end_angle)
-    print(start_angle, end_angle)
     linetype = util.get_linetype(entity, drawing)
     if linetype is None or linetype.dxf.length == 0:
         op = OpenCVOp(cv2.ellipse,
@@ -137,7 +135,6 @@ def textured_arc_approx(
 
 
 def flip_angle(start_angle, end_angle):
-    # assert start_angle >= 0 and end_angle >= 0
     if start_angle < 0:
         start_angle = 360 + start_angle
     if end_angle < 0:
@@ -152,9 +149,6 @@ def flip_angle(start_angle, end_angle):
 
         return start_angle, end_angle
     else:
-        # start_angle = start_angle - 360
-        # if end_angle == 0:
-        #     end_angle = 360
         start_angle = 360 - start_angle
         end_angle *= -1
 
